@@ -1,25 +1,25 @@
 # WireGuardTray
 
-Minimal macOS menu bar app that shows WireGuard connection state.
+A small macOS menu bar app that keeps an eye on your WireGuard connection. It sits in the tray and lets you connect/disconnect without opening a terminal.
 
-## What it does
+## Features
 
-- Shows a tray icon (`lock.shield.fill` when connected, `lock.shield` when disconnected)
-- Checks status every 5 seconds
-- Menu actions: Turn On/Turn Off, Refresh, Open WireGuard, Quit
-- `Turn On` tries `scutil --nc start` for WireGuard VPN services, then `wg-quick up`
-- `Turn Off` tries `scutil --nc stop` for connected WireGuard VPN services, then `wg-quick down`
-- If macOS reports only `utun*` interfaces, the app maps to your WireGuard config name when possible (for example `wg0`)
-- When direct `wg-quick` fails due permissions, the app retries via macOS admin prompt
-- `wg-quick` actions prefer Homebrew bash (bash 4+) to avoid macOS bash 3 compatibility issues
+- Lock icon in the menu bar shows whether you're connected or not
+- Toggle your tunnel on and off from the menu
+- Polls status every 5 seconds
+- Works with both `scutil` (Network Extension) tunnels and `wg-quick` configs
+- Prompts for admin credentials when needed
+- Remembers which tunnel you last connected to
 
-## Run in development
+## Getting started
+
+Run it directly during development:
 
 ```bash
 swift run
 ```
 
-## Build a `.app`
+Or build a standalone `.app` bundle:
 
 ```bash
 chmod +x scripts/build_app.sh
@@ -27,9 +27,15 @@ chmod +x scripts/build_app.sh
 open dist/WireGuardTray.app
 ```
 
-## Detection logic
+## How it detects tunnels
 
-The app checks, in order:
+1. Checks `wg show interfaces` for any active WireGuard interfaces
+2. Checks `scutil --nc list` for VPN services with WireGuard in the name
 
-1. `wg show interfaces` (common install locations and PATH)
-2. `scutil --nc list` for connected VPN services with names matching WireGuard
+When connecting, it tries `scutil --nc start` first, then falls back to `wg-quick up`. If permissions are insufficient it'll show a macOS admin prompt and retry.
+
+## Requirements
+
+- macOS
+- WireGuard installed (via Homebrew or the App Store app)
+- For `wg-quick`: bash 4+ recommended (the bundled macOS bash is v3 and can cause issues)
